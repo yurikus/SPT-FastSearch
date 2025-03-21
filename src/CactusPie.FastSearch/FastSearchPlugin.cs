@@ -1,64 +1,45 @@
-﻿using BepInEx;
+﻿using System.Reflection;
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using JetBrains.Annotations;
+using CactusPie.FastSearch;
 
-namespace CactusPie.FastSearch
+[assembly: AssemblyDescription("CactusPie.FastSearch")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("CactusPie.FastSearch")]
+[assembly: AssemblyCopyright("Copyright © 2025 cactuspie. All rights reserved.")]
+[assembly: AssemblyTrademark("SPT 3.11.1, EFT 0.16.1.3.35392")]
+
+[assembly: AssemblyVersion(FastSearchPlugin.Version)]
+[assembly: AssemblyFileVersion(FastSearchPlugin.Version)]
+
+namespace CactusPie.FastSearch;
+
+[BepInPlugin("com.cactuspie.fastsearch", "CactusPie.FastSearch", Version)]
+public class FastSearchPlugin : BaseUnityPlugin
 {
-    [BepInPlugin("com.cactuspie.fastsearch", "CactusPie.FastSearch", "1.2.0")]
-    public class FastSearchPlugin : BaseUnityPlugin
+    public const string Version = "1.3.0";
+
+    internal static ConfigEntry<bool> InstantlyRevealEverything { get; private set; }
+    internal static ManualLogSource SearchTimePluginLogger { get; private set; }
+
+    internal void Start()
     {
-        internal static ConfigEntry<float> SearchTimeMultiplier { get; private set; }
-        internal static ConfigEntry<bool> SearchInitialDelayEnabled { get; private set; }
-        internal static ConfigEntry<bool> InstantlyRevealEverything { get; private set; }
+        SearchTimePluginLogger = Logger;
 
-        internal static ManualLogSource SearchTimePluginLogger { get; private set; }
+        Logger.LogInfo("CactusPie.FastSearch");
 
-        [UsedImplicitly]
-        internal void Start()
-        {
-            SearchTimePluginLogger = Logger;
-            Logger.LogInfo("Search time reduction");
-
-            const string sectionName = "Search time settings";
-
-            SearchTimeMultiplier = Config.Bind
+        InstantlyRevealEverything = Config.Bind
+        (
+            "Fast Search Settings",
+            "Instantly reveal everything",
+            false,
+            new ConfigDescription
             (
-                sectionName,
-                "Search time multiplier",
-                0f,
-                new ConfigDescription
-                (
-                    "The time between revealing each item",
-                    new AcceptableValueRange<float>(0f, 1f)
-                )
-            );
+                "Instantly reveals everything, as if you have 100% Elite Search Luck"
+            )
+        );
 
-            SearchInitialDelayEnabled = Config.Bind
-            (
-                sectionName,
-                "Search initial delay",
-                false,
-                new ConfigDescription
-                (
-                    "Enable or disable the time it takes to start searching after opening a container"
-                )
-            );
-
-            InstantlyRevealEverything = Config.Bind
-            (
-                sectionName,
-                "Instantly reveal everything",
-                false,
-                new ConfigDescription
-                (
-                    "Instantly reveals everything - no need to even press the search button. Overrides other settings for this mod."
-                )
-            );
-
-            new SearchTimePatch().Enable();
-            new SearchInitialDelayPatch().Enable();
-            new AutoUncoverPatch().Enable();
-        }
+        new InstantLuckySearch().Enable();
     }
 }
